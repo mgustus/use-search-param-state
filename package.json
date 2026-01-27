@@ -1,7 +1,7 @@
 {
   "name": "use-search-param-state",
   "author": "Michael Gustus",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "useSearchParamState - React state hook using URL search params",
   "keywords": [
     "search param",

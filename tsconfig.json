@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    /* Base Options */
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Library Generation */
+    "declaration": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+
+    /* Module Resolution */
+    "moduleResolution": "Bundler",
+    "isolatedModules": true,
+
+    /* JSX and React */
+    "jsx": "react-jsx",
+    "jsxImportSource": "react", 
+
+    /* Strictness */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true, 
+    "noPropertyAccessFromIndexSignature": true,
+
+    /* Interop */
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src", "eslint.config.mjs"],
+  "exclude": ["node_modules", "dist", "**/*.test.tsx", "**/*.test.ts"]
+}

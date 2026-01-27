@@ -1,0 +1,68 @@
+name: Release and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: write  # Required for Trusted Publishing & GitHub release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for tags
+
+      # 2️⃣ Setup Node.js and npm registry
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/  # npm registry
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # 4️⃣ Build the package
+      - name: Build package
+        run: yarn build
+
+      # 5️⃣ Configure git for version commits
+      - name: Configure git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      # 6️⃣ Bump version (force patch if no conventional commits)
+      - name: Bump version
+        id: version
+        run: |
+          set -e
+          echo "Attempting conventional release..."
+          yarn release || yarn release --release-as patch
+          echo "tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+
+      # 7️⃣ Push version bump + tag
+      - name: Push version bump & tags
+        run: git push --follow-tags origin main
+
+      # 8️⃣ Publish to npm using Trusted Publishing (OIDC)
+      # - name: Publish to npm
+      #   run: npm publish
+
+      # 9️⃣ Create GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

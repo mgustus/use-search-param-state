@@ -9,6 +9,7 @@
     /* Library Generation */
     "declaration": true,
     "resolveJsonModule": true,
+    "rootDir": "./src",
     "outDir": "./dist",
 
     /* Module Resolution */

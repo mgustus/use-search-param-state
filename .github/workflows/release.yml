@@ -33,7 +33,7 @@ jobs:
 
       # 4️⃣ Build the package
       - name: Build package
-        run: yarn build
+        run: yarn workspace use-search-param-state build
 
       # 5️⃣ Configure git for version commits
       - name: Configure git

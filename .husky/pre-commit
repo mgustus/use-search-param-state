@@ -1,1 +1,1 @@
-yarn test
+yarn workspace use-search-param-state test

@@ -23,7 +23,7 @@ export const useSearchParamState = <T = string | undefined>(
   const strValue = useSearchParam(paramName); // triggers parsedValue recalculation when search param changes
 
   // store the parsed value in a ref so the behavior of the hook will resemble useState.
-  const parsedValueRef = useRef<T>(null as T);
+  const parsedValueRef = useRef(defaultValue);
 
   // parse the string value of search param and put it in the ref. unlike useEffect, useMemo runs during render.
   useMemo(() => {

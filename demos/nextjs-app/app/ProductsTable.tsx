@@ -99,7 +99,7 @@ export function ProductsTable({
         <select
           value={category}
           onChange={(e) => {
-            setCategory(e.target.value);
+            setCategory(e.target.value as typeof category);
             setPagination({ ...pagination, pageIndex: 0 });
           }}
           className="category-select"

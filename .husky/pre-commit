@@ -1,1 +1,3 @@
-yarn workspace use-search-param-state test
+yarn typecheck
+yarn lint
+yarn test

@@ -94,9 +94,9 @@ const objectSchema = z.string().transform(s => JSON.parse(s)).pipe(
 );
 ```
 
-## Demos
+## Examples
 
-Three demo apps showcase the hook with a products table (search, category filter, sorting, pagination — all stored in URL search params).
+Three example apps showcase the hook with a products table (search, category filter, sorting, pagination — all stored in URL search params).
 
 ### Run locally
 
@@ -115,13 +115,13 @@ yarn dev:react-zod
 yarn dev:next
 ```
 
-| Demo | Schema Library | SSR | Port |
-|------|---------------|-----|------|
-| `demos/react-app-arktype` | arktype | No | 3000 |
-| `demos/react-app-zod` | Zod | No | 3002 |
-| `demos/nextjs-app` | arktype | Yes | 3001 |
+| Example | Schema Library | SSR | Port |
+|---------|---------------|-----|------|
+| `examples/react-app-arktype` | arktype | No | 3000 |
+| `examples/react-app-zod` | Zod | No | 3002 |
+| `examples/nextjs-app` | arktype | Yes | 3001 |
 
-The Next.js demo uses `parseParam` on the server to pre-render the table with the correct data based on URL params, then hydrates with `useSearchParamState` on the client for interactive updates.
+The Next.js example uses `parseParam` on the server to pre-render the table with the correct data based on URL params, then hydrates with `useSearchParamState` on the client for interactive updates.
 
 ## Project Structure
 
@@ -129,12 +129,12 @@ This repo is a Yarn workspaces monorepo:
 
 ```
 packages/use-search-param-state/   # the library (published to npm)
-demos/react-app-arktype/           # React + arktype demo
-demos/react-app-zod/               # React + Zod demo
-demos/nextjs-app/                  # Next.js App Router demo
+examples/react-app-arktype/        # React + arktype example
+examples/react-app-zod/            # React + Zod example
+examples/nextjs-app/               # Next.js App Router example
 ```
 
-Only `packages/use-search-param-state` is published. Demo apps are private workspaces.
+Only `packages/use-search-param-state` is published. Example apps are private workspaces.
 
 ## License
 

@@ -4,7 +4,7 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>useSearchParamState Demo</h1>
+        <h1>useSearchParamState Example</h1>
         <p className="subtitle">
           React + arktype — Table state is stored in URL search params.
           Try changing filters, sorting, or pagination, then refresh the page.

@@ -1,9 +1,12 @@
+'use client';
+
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
 } from '@tanstack/react-table';
+import { useEffect, useState } from 'react';
 import { useSearchParamState } from 'use-search-param-state';
 import {
   categories,
@@ -12,8 +15,8 @@ import {
   getPaginatedProducts,
   getSortedProducts,
   products,
-  type Product,
   type PaginationState,
+  type Product,
   type SortingState,
 } from './data';
 import {
@@ -36,16 +39,46 @@ const columns: ColumnDef<Product>[] = [
   { accessorKey: 'stock', header: 'Stock', size: 80 },
 ];
 
-export function ProductsTable() {
+interface ProductsTableProps {
+  initialData: Product[];
+  initialTotalCount: number;
+}
+
+export function ProductsTable({
+  initialData,
+  initialTotalCount,
+}: ProductsTableProps) {
   const [search, setSearch] = useSearchParamState('search', searchSchema, '');
-  const [category, setCategory] = useSearchParamState('category', categorySchema, 'all' as const);
+  const [category, setCategory] = useSearchParamState('category', categorySchema, 'all');
   const [pagination, setPagination] = useSearchParamState('pagination', paginationSchema, DEFAULT_PAGINATION);
   const [sorting, setSorting] = useSearchParamState('sorting', sortingSchema, [] as SortingState[]);
 
-  const filtered = getFilteredProducts(products, search, category);
-  const sorted = getSortedProducts(filtered, sorting);
-  const paginated = getPaginatedProducts(sorted, pagination);
-  const pageCount = Math.ceil(filtered.length / pagination.pageSize);
+  // Setting a value equal to its default removes the param from the URL.
+  // Doing this for every param yields a "clear all filters" handler.
+  const hasFilters =
+    search !== '' ||
+    category !== 'all' ||
+    pagination.pageIndex !== DEFAULT_PAGINATION.pageIndex ||
+    pagination.pageSize !== DEFAULT_PAGINATION.pageSize ||
+    sorting.length > 0;
+
+  const clearFilters = () => {
+    setSearch('');
+    setCategory('all');
+    setPagination(DEFAULT_PAGINATION);
+    setSorting([]);
+  };
+
+  // On the client, recompute from full dataset so interactions are instant.
+  // Falls back to server-rendered initialData during SSR / first paint.
+  const isClient = typeof window !== 'undefined';
+  const filtered = isClient
+    ? getFilteredProducts(products, search, category)
+    : initialData;
+  const sorted = isClient ? getSortedProducts(filtered as Product[], sorting) : filtered;
+  const paginated = isClient ? getPaginatedProducts(sorted, pagination) : sorted;
+  const totalCount = isClient ? (filtered as Product[]).length : initialTotalCount;
+  const pageCount = Math.ceil(totalCount / pagination.pageSize);
 
   const table = useReactTable({
     data: paginated,
@@ -92,6 +125,14 @@ export function ProductsTable() {
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={clearFilters}
+          disabled={!hasFilters}
+          className="clear-button"
+        >
+          Clear
+        </button>
       </div>
 
       <table>
@@ -135,8 +176,8 @@ export function ProductsTable() {
 
       <div className="pagination">
         <div className="pagination-info">
-          Showing {filtered.length === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1}
-          –{Math.min((pagination.pageIndex + 1) * pagination.pageSize, filtered.length)} of {filtered.length}
+          Showing {totalCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1}
+          –{Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalCount)} of {totalCount}
         </div>
         <div className="pagination-controls">
           <button
@@ -179,6 +220,26 @@ export function ProductsTable() {
           </select>
         </div>
       </div>
+
+      <UrlDisplay />
     </div>
+  );
+}
+
+function UrlDisplay() {
+  const [search, setSearch] = useState('');
+  useEffect(() => {
+    const update = () => setSearch(window.location.search);
+    update();
+    window.addEventListener('popstate', update);
+    return () => window.removeEventListener('popstate', update);
+  }, []);
+
+  return (
+    <footer>
+      <p>
+        Current URL: <code>{search || '(no params — defaults active)'}</code>
+      </p>
+    </footer>
   );
 }

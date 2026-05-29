@@ -38,9 +38,25 @@ const columns: ColumnDef<Product>[] = [
 
 export function ProductsTable() {
   const [search, setSearch] = useSearchParamState('search', searchSchema, '');
-  const [category, setCategory] = useSearchParamState('category', categorySchema, 'all');
+  const [category, setCategory] = useSearchParamState('category', categorySchema, 'all' as const);
   const [pagination, setPagination] = useSearchParamState('pagination', paginationSchema, DEFAULT_PAGINATION);
   const [sorting, setSorting] = useSearchParamState('sorting', sortingSchema, [] as SortingState[]);
+
+  // Setting a value equal to its default removes the param from the URL.
+  // Doing this for every param yields a "clear all filters" handler.
+  const hasFilters =
+    search !== '' ||
+    category !== 'all' ||
+    pagination.pageIndex !== DEFAULT_PAGINATION.pageIndex ||
+    pagination.pageSize !== DEFAULT_PAGINATION.pageSize ||
+    sorting.length > 0;
+
+  const clearFilters = () => {
+    setSearch('');
+    setCategory('all');
+    setPagination(DEFAULT_PAGINATION);
+    setSorting([]);
+  };
 
   const filtered = getFilteredProducts(products, search, category);
   const sorted = getSortedProducts(filtered, sorting);
@@ -92,6 +108,14 @@ export function ProductsTable() {
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={clearFilters}
+          disabled={!hasFilters}
+          className="clear-button"
+        >
+          Clear
+        </button>
       </div>
 
       <table>

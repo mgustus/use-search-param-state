@@ -2,7 +2,7 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "demos/*"
+    "examples/*"
   ],
   "scripts": {
     "build": "yarn workspace use-search-param-state build",
@@ -10,9 +10,9 @@
     "lint": "yarn workspace use-search-param-state lint",
     "typecheck": "yarn workspaces run typecheck",
     "release": "yarn workspace use-search-param-state release",
-    "dev:react": "yarn workspace react-arktype-demo dev",
-    "dev:react-zod": "yarn workspace react-zod-demo dev",
-    "dev:next": "yarn workspace nextjs-demo dev",
+    "dev:react": "yarn workspace react-arktype-example dev",
+    "dev:react-zod": "yarn workspace react-zod-example dev",
+    "dev:next": "yarn workspace nextjs-example dev",
     "prepare": "husky"
   },
   "devDependencies": {

@@ -42,7 +42,7 @@ export default async function Page(props: PageProps) {
   return (
     <div className="app">
       <header>
-        <h1>useSearchParamState Demo</h1>
+        <h1>useSearchParamState Example</h1>
         <p className="subtitle">
           Next.js (App Router) + arktype — Server-side rendered initial data,
           client-side interactive updates. Table state lives in URL search params.

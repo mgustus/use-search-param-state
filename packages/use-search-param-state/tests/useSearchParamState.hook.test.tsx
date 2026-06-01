@@ -1,5 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
+import type { PropsWithChildren } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SearchParamStateProvider } from '../src/SearchParamStateProvider';
 import type { StandardSchemaV1 } from '../src/standardSchema';
 import { useSearchParamState } from '../src/useSearchParamState.hook';
 
@@ -7,7 +9,7 @@ import { useSearchParamState } from '../src/useSearchParamState.hook';
 // specific validation library (arktype, zod, valibot, etc.).
 type MockSchema<T> = StandardSchemaV1<string | undefined, T>;
 
-const makeSchema = <T>(
+const makeSchema = <T,>(
   validate: (input: string | undefined) => StandardSchemaV1.Result<T>,
 ): MockSchema<T> => ({
   '~standard': {
@@ -330,6 +332,197 @@ describe('useSearchParamState', () => {
       expect(() =>
         renderHook(() => useSearchParamState('q', asyncSchema, 'default')),
       ).toThrow(TypeError);
+    });
+  });
+
+  describe('options', () => {
+    describe('navigate', () => {
+      it('per-call navigate is used instead of the default replaceState', () => {
+        const navigate = vi.fn();
+        const { result } = renderHook(() =>
+          useSearchParamState('q', stringSchema, 'default', { navigate }),
+        );
+
+        act(() => {
+          result.current[1]('hello');
+        });
+
+        expect(navigate).toHaveBeenCalledWith('?q=hello');
+        // The default navigate (replaceState) was bypassed, so window.location
+        // was not mutated by the hook.
+        expect(window.location.search).toBe('');
+      });
+
+      it('provider navigate is used when no per-call navigate is given', () => {
+        const navigate = vi.fn();
+        const wrapper = ({ children }: PropsWithChildren) => (
+          <SearchParamStateProvider navigate={navigate}>
+            {children}
+          </SearchParamStateProvider>
+        );
+
+        const { result } = renderHook(
+          () => useSearchParamState('q', stringSchema, 'default'),
+          { wrapper },
+        );
+
+        act(() => {
+          result.current[1]('hello');
+        });
+
+        expect(navigate).toHaveBeenCalledWith('?q=hello');
+      });
+    });
+
+    describe('onError', () => {
+      it('invokes per-call onError when schema validation fails', () => {
+        const onError = vi.fn();
+        window.history.replaceState({}, '', '/?count=not-a-number');
+
+        renderHook(() =>
+          useSearchParamState('count', numberSchema, 0, { onError }),
+        );
+
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(onError).toHaveBeenCalledWith([{ message: 'not a number' }]);
+      });
+
+      it('invokes provider onError when no per-call onError is given', () => {
+        const onError = vi.fn();
+        window.history.replaceState({}, '', '/?count=not-a-number');
+        const wrapper = ({ children }: PropsWithChildren) => (
+          <SearchParamStateProvider onError={onError}>
+            {children}
+          </SearchParamStateProvider>
+        );
+
+        renderHook(() => useSearchParamState('count', numberSchema, 0), {
+          wrapper,
+        });
+
+        expect(onError).toHaveBeenCalledTimes(1);
+      });
+
+      it('does not invoke onError when validation succeeds', () => {
+        const onError = vi.fn();
+        window.history.replaceState({}, '', '/?count=42');
+
+        renderHook(() =>
+          useSearchParamState('count', numberSchema, 0, { onError }),
+        );
+
+        expect(onError).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('clearOnDefault', () => {
+      it('keeps the param in URL when value is set to default and clearOnDefault is false', () => {
+        window.history.replaceState({}, '', '/?q=something');
+        const { result } = renderHook(() =>
+          useSearchParamState('q', stringSchema, 'default', {
+            clearOnDefault: false,
+          }),
+        );
+
+        act(() => {
+          result.current[1]('default');
+        });
+
+        expect(window.location.search).toBe('?q=default');
+        expect(result.current[0]).toBe('default');
+      });
+    });
+
+    describe('clearOnError', () => {
+      it('removes the invalid param from URL on read when clearOnError is true', () => {
+        window.history.replaceState({}, '', '/?count=not-a-number');
+        const { result } = renderHook(() =>
+          useSearchParamState('count', numberSchema, 0, { clearOnError: true }),
+        );
+
+        expect(result.current[0]).toBe(0);
+        expect(window.location.search).toBe('');
+      });
+
+      it('preserves other params when removing the invalid one', () => {
+        window.history.replaceState(
+          {},
+          '',
+          '/?count=not-a-number&keep=me',
+        );
+        renderHook(() =>
+          useSearchParamState('count', numberSchema, 0, { clearOnError: true }),
+        );
+
+        expect(window.location.search).toBe('?keep=me');
+      });
+
+      it('does not touch the URL when clearOnError is false (default)', () => {
+        window.history.replaceState({}, '', '/?count=not-a-number');
+        renderHook(() => useSearchParamState('count', numberSchema, 0));
+
+        expect(window.location.search).toBe('?count=not-a-number');
+      });
+
+      it('invokes onError before clearing the URL', () => {
+        const onError = vi.fn();
+        window.history.replaceState({}, '', '/?count=not-a-number');
+
+        renderHook(() =>
+          useSearchParamState('count', numberSchema, 0, {
+            clearOnError: true,
+            onError,
+          }),
+        );
+
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(window.location.search).toBe('');
+      });
+    });
+
+    describe('precedence', () => {
+      it('per-call options override provider options', () => {
+        const providerNavigate = vi.fn();
+        const callNavigate = vi.fn();
+        const wrapper = ({ children }: PropsWithChildren) => (
+          <SearchParamStateProvider
+            navigate={providerNavigate}
+            clearOnDefault={false}
+          >
+            {children}
+          </SearchParamStateProvider>
+        );
+
+        const { result } = renderHook(
+          () =>
+            useSearchParamState('q', stringSchema, 'default', {
+              navigate: callNavigate,
+            }),
+          { wrapper },
+        );
+
+        act(() => {
+          result.current[1]('hello');
+        });
+
+        expect(callNavigate).toHaveBeenCalledWith('?q=hello');
+        expect(providerNavigate).not.toHaveBeenCalled();
+      });
+
+      it('falls through to library defaults when neither provider nor call set an option', () => {
+        // No provider, no per-call options → default navigate (replaceState)
+        // and default clearOnDefault: true.
+        window.history.replaceState({}, '', '/?q=something');
+        const { result } = renderHook(() =>
+          useSearchParamState('q', stringSchema, 'default'),
+        );
+
+        act(() => {
+          result.current[1]('default');
+        });
+
+        expect(window.location.search).toBe('');
+      });
     });
   });
 });
